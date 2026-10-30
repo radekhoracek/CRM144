@@ -45,6 +45,31 @@ Podmínka: `Varianta.TEXT_VAR.rawValue == '0NN'`
 | 055 | – | – | ✅ |
 | 056 | – | ✅ | – |
 
+### Pořadí bloků v šablonách
+
+Všechny tři šablony (`TEMP_314`, `TEMP_315`, `TEMP_316`) mají `layout="tb"`. Bloky se proto skládají shora dolů v tom pořadí, v jakém jsou definované v šabloně, a skryté bloky (`presence="hidden"`) nezabírají místo. Skript každého bloku `sf_NN` testuje kód `0NN`, takže název bloku odpovídá kódu `TEXT_VAR`.
+
+| Pozice | TEMP_314 | TEMP_315 | TEMP_316 |
+|:-:|---|---|---|
+| 1 | `sf_BODY` | `sf_BODY` | `sf_BODY` |
+| 2 | `sf_39` (039) | `sf_39` (039) | `sf_48` (048) |
+| 3 | `sf_40` (040) | `sf_40` (040) | `sf_41` (041) |
+| 4 | `sf_54` (054) | `sf_54` (054) | `sf_42` (042) |
+| 5 | `sf_41` (041) | `sf_41` (041) | `sf_39` (039) |
+| 6 | `sf_42` (042) | `sf_42` (042) | `sf_49` (049) |
+| 7 | `sf_43` (043) | `sf_43` (043) | `sf_50` (050) |
+| 8 | `sf_44` (044) | `sf_44` (044) | `sf_55` (055) |
+| 9 | `sf_45` (045) | `sf_56` (056) | `sf_BODY2` |
+| 10 | `sf_46` (046) | `sf_45` (045) | |
+| 11 | `sf_BODY2` | `sf_47` (047) | |
+| 12 | | `sf_BODY2` | |
+
+Pozorování:
+
+- Pořadí neodpovídá číselnému řazení kódů. Blok `sf_54` je ve `TEMP_314` a `TEMP_315` hned za `sf_40`, `sf_56` je v `TEMP_315` před `sf_45` a `TEMP_316` začíná blokem `sf_48`, za kterým teprve následují `sf_41`, `sf_42` a `sf_39`.
+- `TEMP_314` a `TEMP_315` mají společné pořadí 039, 040, 054, 041, 042, 043, 044. Pak se liší: v `TEMP_314` následují 045 a 046, v `TEMP_315` následují 056, 045 a 047.
+- `TEXT_VAR` má vždy jen jednu hodnotu, proto je viditelný nejvýše jeden blok varianty. Výsledný dokument má tedy vždy pořadí `sf_BODY` → `sf_NN` → `sf_BODY2` a pořadí uvnitř šablony se projeví až tehdy, kdyby se v budoucnu zobrazovalo více bloků najednou.
+
 Každý blok varianty obsahuje pole `BODY1`, které nese rich text z dat. V `TEMP_314` jsou navíc pole `PREMEXT` a `PREMLABEL`, která jsou ale staticky skrytá a nikdy se nezobrazí.
 
 ### Patička – zprostředkovatel
