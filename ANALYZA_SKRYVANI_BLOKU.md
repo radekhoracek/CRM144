@@ -169,6 +169,13 @@ Data obsahují `TEMPL_CODE=315`, `TEXT_VAR=041` a `MIDD_INVISIBLE=X`. Výsledek:
    - Pole `BODY` (25 mm) a `BODY2` (40 mm) mají pevnou výšku ve všech šablonách.
    - Delší text z dat se proto může oříznout. Pro testovací data se to týká bloku `TEMP_315.sf_41` (20 mm).
 5. **Nejednotný zápis podmínek.** Část skriptů porovnává s proměnnou (`sf39.value`) a část s literálem (`'040'`). Funkčně to vychází nastejno, ale údržba je kvůli tomu náchylná k chybám.
-6. **Duplicitní kód.** Logika je zkopírovaná do 30 skriptů. Šla by nahradit jedním skriptem na úrovni šablony, který by porovnal přípony názvů `sf_NN` s hodnotou `TEXT_VAR`.
+6. **Duplicitní kód a nadbytečné bloky.** Logika je zkopírovaná do 30 skriptů. Šla by nahradit jedním skriptem na úrovni šablony, který by porovnal přípony názvů `sf_NN` s hodnotou `TEXT_VAR`.
+   - **Co bloky obsahují:** bloky `sf_NN` obsahují jen pole `BODY1` (v `TEMP_314` navíc skrytá pole `PREMEXT` a `PREMLABEL`). Nemají žádný vlastní pevný text, obrázek ani floating field. Všechna pole `BODY1` jsou napojená globálně, takže každý blok zobrazí stejný text z dat.
+   - **Jediný skutečný rozdíl je výška pole `BODY1`:** pevná 20 mm, pevná 10 mm, nebo rostoucí `minH` 10 mm. `TEXT_VAR` ve formuláři tedy určuje jen to, kolik místa text dostane. Samotný text vybírá systém, který data generuje.
+   - **Pravděpodobné důvody rozdělení (nelze ověřit z formuláře):**
+     1. Pozůstatek dřívějšího stavu, kdy byly texty variant napsané přímo ve formuláři. Tomu odpovídají i nevyužitá pole `PREMEXT`/`PREMLABEL` a `ID_form = CRM113`.
+     2. Rezervované místo podle délky textu, aby `BODY2` a podpisy zůstaly na stejném místě.
+     3. Připravené místo pro případné budoucí úpravy jednotlivých variant.
+   - **Možné zjednodušení:** v každé šabloně nahradit všechny bloky variant jedním blokem s jedním polem `BODY1`, které roste s textem (`minH`). Odpadne 30 skriptů i riziko oříznutí textu. Před změnou je potřeba ověřit s autorem formuláře, jestli je pevná výška záměrná (kvůli umístění podpisů) a jestli některé kombinace kódů mají úmyslně zůstat bez textu.
 7. **Nevyužitá pole.** Pole `PREMEXT` a `PREMLABEL` v `TEMP_314` jsou staticky skrytá, bez jakékoli logiky a nejsou vložená ani jako floating field. Ověřte, jestli je formulář opravdu potřebuje. Pole `SALESREGISTER1/2` jsou sice skrytá, ale používají se jako floating fields v textu „Zápis v OR“.
 8. **Nesprávné ID formuláře.** Výchozí hodnota pole `ID_form` je `CRM113`, ale formulář je CRM144. Pravděpodobně jde o pozůstatek kopie z jiného formuláře.
