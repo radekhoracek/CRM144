@@ -12,7 +12,32 @@ Všechna pole jsou svázaná s daty přes `bind match="global"`.
 | `TEXT_VAR` | `form.Page1.Varianta` (invisible) | výběr textového bloku uvnitř šablony |
 | `MIDD_INVISIBLE` | patička, 3. nepojmenovaný subform (invisible) | zobrazení řádku o zprostředkovateli |
 
-Formulářové proměnné (`form/variables`) jsou: `templ314=314`, `templ315=315`, `templ316=316`, `sf39=039`, `sf41=041`, `sf44=044`, `sf46=046`, `sf47=047`, `sf50=050`, `sf54=054` a `TRUE=X`.
+### Formulářové proměnné
+
+Proměnné najdete v Designeru přes File → Form Properties → Variables (v XML šablony jako `form/variables`). Jsou to textové konstanty a jejich obsah je tento:
+
+| Proměnná | Hodnota | Použití |
+|---|---|---|
+| `templ314`, `templ315`, `templ316` | `314`, `315`, `316` | výběr šablony podle `TEMPL_CODE` |
+| `sf39`, `sf41`, `sf44`, `sf46`, `sf47`, `sf50`, `sf54` | `039`, `041`, `044`, `046`, `047`, `050`, `054` | výběr bloku varianty podle `TEXT_VAR` |
+| `TRUE` | `X` | skrytí řádku o zprostředkovateli podle `MIDD_INVISIBLE` |
+
+Proměnné platí pro celý formulář, takže na ně může odkazovat skript kteréhokoli bloku. Text proměnné se čte přes `.value`. Příklad skriptu bloku `sf_39`:
+
+```javascript
+if (Varianta.TEXT_VAR.rawValue == sf39.value)   // např. "041" == "039" → false
+    {this.presence = "visible";}
+else
+    {this.presence = "hidden";}
+```
+
+Na co si dát pozor:
+
+- **Rozhoduje hodnota proměnné, ne její název.** Kdyby proměnná `sf39` obsahovala `041`, blok `sf_39` by se zobrazil pro kód 041.
+- **Ne všechny kódy mají proměnnou.** Proměnnou používají jen kódy 039, 041, 044, 046, 047, 050 a 054. Kódy 040, 042, 043, 045, 048, 049, 055 a 056 jsou zapsané přímo ve skriptu jako text, například `== '040'`. Výsledek je stejný, jen se tyto kódy přes proměnné změnit nedají.
+- **Jedna proměnná platí ve všech šablonách.** Například změna `sf41` se projeví u bloku `sf_41` v `TEMP_314`, `TEMP_315` i `TEMP_316` současně.
+- **Porovnává se text.** Hodnota v datech musí přesně odpovídat hodnotě proměnné, včetně úvodní nuly.
+- **Pořadí proměnných nemá vliv na zobrazení.** Pořadí v seznamu proměnných (`templ314`, `sf46`, `sf44`, …) s pořadím bloků v dokumentu nesouvisí. Pořadí bloků určuje jen jejich pořadí v šabloně (viz kapitola 2).
 
 ## 2. Hierarchie skrývání (2 úrovně + patička)
 
