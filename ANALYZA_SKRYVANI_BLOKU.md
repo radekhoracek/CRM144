@@ -39,6 +39,22 @@ Na co si dát pozor:
 - **Porovnává se text.** Hodnota v datech musí přesně odpovídat hodnotě proměnné, včetně úvodní nuly.
 - **Pořadí proměnných nemá vliv na zobrazení.** Pořadí v seznamu proměnných (`templ314`, `sf46`, `sf44`, …) s pořadím bloků v dokumentu nesouvisí. Pořadí bloků určuje jen jejich pořadí v šabloně (viz kapitola 2).
 
+### Výchozí hodnoty polí v šabloně
+
+Výchozí hodnota se použije jen tehdy, když ji data nedodají:
+
+| Pole | Výchozí hodnota | Poznámka |
+|---|---|---|
+| `TEMPL_CODE` v záhlaví | `CRM144` | popisek „innogy formulář“, netiskne se (`relevant="-print"`) |
+| `ID_form` v patičce | `CRM113` | netiskne se; neodpovídá názvu formuláře CRM144 |
+| `Varianta.TEMPL_CODE`, `TEXT_VAR`, `MIDD_INVISIBLE` | žádná | |
+| `BODY`, `BODY1`, `BODY2` | žádná | |
+
+Co z toho vyplývá:
+
+- **Dvě pole `TEMPL_CODE`:** pole v záhlaví i pole ve `Varianta` jsou napojená globálně, takže sdílejí stejnou hodnotu z dat. V záhlaví se proto na obrazovce místo „CRM144“ ukáže například „315“ (netiskne se).
+- **Bez dat je tělo prázdné:** žádná ze šablon se nezobrazí. Výchozí hodnota „CRM144“ se neshoduje s 314, 315 ani 316, i kdyby se k `Varianta.TEMPL_CODE` dostala přes globální vazbu (v Designeru neověřeno).
+- **Bez `MIDD_INVISIBLE` se řádek o zprostředkovateli zobrazí:** prázdná hodnota se nerovná „X“.
 ## 2. Hierarchie skrývání (2 úrovně + patička)
 
 ### Úroveň 1 – šablona
@@ -95,7 +111,34 @@ Pozorování:
 - `TEMP_314` a `TEMP_315` mají společné pořadí 039, 040, 054, 041, 042, 043, 044. Pak se liší: v `TEMP_314` následují 045 a 046, v `TEMP_315` následují 056, 045 a 047.
 - `TEXT_VAR` má vždy jen jednu hodnotu, proto je viditelný nejvýše jeden blok varianty. Výsledný dokument má tedy vždy pořadí `sf_BODY` → `sf_NN` → `sf_BODY2` a pořadí uvnitř šablony se projeví až tehdy, kdyby se v budoucnu zobrazovalo více bloků najednou.
 
-Každý blok varianty obsahuje pole `BODY1`, které nese rich text z dat. V `TEMP_314` jsou navíc pole `PREMEXT` a `PREMLABEL`, která jsou ale staticky skrytá a nikdy se nezobrazí.
+V `TEMP_314` jsou navíc pole `PREMEXT` a `PREMLABEL`, která jsou ale staticky skrytá a nikdy se nezobrazí.
+
+### Pole `BODY1` – umístění a zobrazení
+
+Pole `BODY1` je v každém bloku varianty `sf_NN` ve všech třech šablonách, celkem 30×:
+
+```
+TEMP_31x
+├─ sf_BODY   → BODY
+├─ sf_NN     → BODY1   (v každém bloku varianty)
+└─ sf_BODY2  → BODY2
+```
+
+Všechna pole `BODY`, `BODY1` a `BODY2` jsou na data napojená přes `bind match="global"`. Všech 30 polí `BODY1` proto čte jeden a tentýž uzel `<BODY1>` z dat. Totéž platí pro `BODY` a `BODY2`. Formulář tedy neobsahuje 15 různých textů, ale jeden text `BODY1`, který přijde z dat. Kód `TEXT_VAR` určuje jen to, ve kterém bloku a s jakou výškou se zobrazí.
+
+Jak se `BODY1` zobrazuje:
+
+- **Formát:** pole je víceřádkové (`textEdit multiLine="1"`) a hodnotu bere jako HTML (`exData contentType="text/html"`). Data posílají XHTML (`<b>`, `<br/>`, `<p>`), takže se tučné písmo i zalomení řádků vykreslí.
+- **Písmo a šířka:** Arial 8 pt, šířka 165 mm. Popisek obsahuje jen mezery, takže se nevykreslí.
+- **Výška se liší podle bloku:**
+
+| Šablona | Pole roste s textem (`minH` 10 mm) | Pevná výška 20 mm | Pevná výška 10 mm |
+|---|---|---|---|
+| TEMP_314 | sf_40, sf_42, sf_43, sf_45 | sf_39, sf_41, sf_46, sf_54 | sf_44 |
+| TEMP_315 | – | sf_39, sf_41, sf_47, sf_54 | sf_40, sf_42, sf_43, sf_44, sf_45, sf_56 |
+| TEMP_316 | – | sf_39, sf_41 | sf_42, sf_48, sf_49, sf_50, sf_55 |
+
+Kde je výška pevná, delší text se ořízne.
 
 ### Patička – zprostředkovatel
 
@@ -111,7 +154,7 @@ Tedy když `MIDD_INVISIBLE = "X"`.
 
 Data obsahují `TEMPL_CODE=315`, `TEXT_VAR=041` a `MIDD_INVISIBLE=X`. Výsledek:
 
-- Zobrazí se `TEMP_315`, v něm `sf_BODY`, `sf_41` a `sf_BODY2`.
+- Zobrazí se `TEMP_315`, v něm `sf_BODY` (25 mm), `sf_41` (20 mm) a `sf_BODY2` (40 mm). V `sf_41.BODY1` je text „Dovolujeme si Vás však informovat, že podmínky pro ukončení Smlouvy… nebyly splněny z důvodu chybné plné moci.“
 - Všechny ostatní bloky se skryjí, včetně celých šablon `TEMP_314` a `TEMP_316`.
 - Řádek o zprostředkovateli v patičce se skryje.
 
@@ -128,3 +171,4 @@ Data obsahují `TEMPL_CODE=315`, `TEXT_VAR=041` a `MIDD_INVISIBLE=X`. Výsledek:
 5. **Nejednotný zápis podmínek.** Část skriptů porovnává s proměnnou (`sf39.value`) a část s literálem (`'040'`). Funkčně to vychází nastejno, ale údržba je kvůli tomu náchylná k chybám.
 6. **Duplicitní kód.** Logika je zkopírovaná do 30 skriptů. Šla by nahradit jedním skriptem na úrovni šablony, který by porovnal přípony názvů `sf_NN` s hodnotou `TEXT_VAR`.
 7. **Nevyužitá pole.** Pole `PREMEXT` a `PREMLABEL` v `TEMP_314` jsou staticky skrytá, bez jakékoli logiky a nejsou vložená ani jako floating field. Ověřte, jestli je formulář opravdu potřebuje. Pole `SALESREGISTER1/2` jsou sice skrytá, ale používají se jako floating fields v textu „Zápis v OR“.
+8. **Nesprávné ID formuláře.** Výchozí hodnota pole `ID_form` je `CRM113`, ale formulář je CRM144. Pravděpodobně jde o pozůstatek kopie z jiného formuláře.
